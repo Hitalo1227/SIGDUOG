@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema Interno de Gestão</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+        .header {
+            background-color: #004a73;
+            color: white;
+            padding: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: relative;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .header .left-section {
+            display: flex;
+            align-items: center;
+        }
+        .header .logo img {
+            height: 40px;
+            margin-left: 10px;
+        }
+        .header .menu-toggle {
+            background-color: #004a73;
+            color: white;
+            border: none;
+            padding: 10px;
+            cursor: pointer;
+            border-radius: 4px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .header .menu-toggle div {
+            width: 25px;
+            height: 3px;
+            background-color: white;
+            border-radius: 2px;
+        }
+        .header .logout-btn,
+        .header .clear-btn,
+        .header .key-btn {
+            background-color: #004a73;
+            color: white;
+            border: none;
+            padding: 10px;
+            cursor: pointer;
+            border-radius: 4px;
+            margin-left: 10px;
+        }
+        .header .logout-btn {
+            background-color: #f44336;
+        }
+        .header .info {
+            display: flex;
+            align-items: center;
+            font-size: 12px;
+        }
+        .header .info span {
+            margin-left: 15px;
+        }
+        .menu {
+            display: flex;
+            flex-direction: column;
+            width: 250px;
+            background-color: #ccc;
+            color: white;
+            position: fixed;
+            top: 50px;
+            left: 0;
+            height: calc(100% - 50px);
+            overflow: auto;
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+        }
+        .menu.active {
+            transform: translateX(0);
+            background-color: #f0f0f0;
+        }
+        .menu .search-container {
+            padding: 10px;
+            background-color: #e0e0e0;
+            border-bottom: 1px solid #ccc;
+        }
+        .menu .search-container input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            margin-top: 10px;
+        }
+        .menu a {
+            padding: 15px;
+            text-decoration: none;
+            color: #333;
+            display: block;
+            border-bottom: 1px solid #ddd;
+            font-size: 14px;
+            transition: background-color 0.3s ease;
+        }
+        .menu a:hover {
+            background-color: #ddd;
+        }
+        .submenu {
+            display: none;
+            background-color: #ddd;
+            transition: height 0.3s ease;
+        }
+        .submenu a {
+            border-bottom: 1px solid #ccc;
+        }
+        .submenu a:hover {
+            background-color: #ccc;
+        }
+        .menu-item {
+            cursor: pointer;
+        }
+        .menu-item.active .submenu {
+            display: block;
+        }
+        .menu-item .arrow {
+            float: right;
+            margin-left: 10px;
+            font-size: 12px;
+        }
+        .menu-item.active .arrow {
+            transform: rotate(180deg);
+        }
+        .content {
+            margin-left: 250px;
+            padding: 20px;
+            flex: 1;
+            overflow-y: auto;
+            transition: margin-left 0.3s ease;
+        }
+        @media (max-width: 768px) {
+            .menu {
+                width: 100%;
+                height: calc(100vh - 50px);
+            }
+            .menu-toggle {
+                display: block;
+            }
+            .content {
+                margin-left: 0;
+            }
+            .menu.active {
+                transform: translateX(0);
+            }
+        }
+        .confirmation-dialog,
+        .access-point-dialog {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            padding: 20px;
+            border: 1px solid #ccc;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            z-index: 2000;
+        }
+        .confirmation-dialog button,
+        .access-point-dialog button {
+            margin: 5px;
+            padding: 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .confirmation-dialog .confirm-btn {
+            background-color: #f44336;
+            color: white;
+        }
+        .confirmation-dialog .cancel-btn,
+        .access-point-dialog .cancel-btn {
+            background-color: #004a73;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <div class="left-section">
+            <button class="menu-toggle" onclick="toggleMenu()">
+                <div></div>
+                <div></div>
+                <div></div>
+            </button>
+            <img src="file:///C:/Users/hital/Downloads/logo%20duog.png" alt="Logo">
+            <button class="clear-btn" onclick="clearContent()"><i class="fas fa-home"></i></button>
+        </div>
+        <div class="info">
+            <span id="username">DUOG |</span>
+            <span id="access-level">X ADMINISTRADOR DO SISTEMA</span>
+            <span id="datetime"></span>
+        </div>
+        <div>
+            <button class="key-btn" onclick="showAccessPointDialog()"><i class="fas fa-key"></i></button>
+            <button class="logout-btn" onclick="showLogoutConfirmation()"><i class="fas fa-power-off"></i></button>
+        </div>
+    </div>
+
+    <div class="menu" id="menu">
+        <div class="search-container">
+            <input type="text" id="search" placeholder="Buscar..." oninput="filterMenu()">
+        </div>
+        <div class="menu-item" data-id="operacional">
+            <a href="#" onclick="toggleSubMenu('operacional')">Operacional <span class="arrow">&#9662;</span></a>
+            <div class="submenu" id="operacional">
+                <a href="#" onclick="loadContent('tarefas')">Tarefas</a>
+                <a href="#" onclick="loadContent('chamados')">Chamados</a>
+                <a href="#" onclick="loadContent('registro')">Registro de atividades</a>
+                <a href="#" onclick="loadContent('reunioes')">Reuniões</a>
+            </div>
+        </div>
+        <div class="menu-item" data-id="cadastros">
+            <a href="#" onclick="toggleSubMenu('cadastros')">Cadastros <span class="arrow">&#9662;</span></a>
+            <div class="submenu" id="cadastros">
+                <a href="#" onclick="loadContent('municipio')">Cadastro de município</a>
+                <a href="#" onclick="loadContent('unidades')">Cadastro de unidades</a>
+                <a href="#" onclick="loadContent('setores')">Cadastro de setores</a>
+                <a href="#" onclick="loadContent('equipamentos')">Cadastro de equipamentos</a>
+                <a href="#" onclick="loadContent('modelos')">Cadastro de modelos</a>
+                <a href="#" onclick="loadContent('marcas')">Cadastro de marcas</a>
+            </div>
+        </div>
+        <div class="menu-item" data-id="estoque">
+            <a href="#" onclick="toggleSubMenu('estoque')">Estoque <span class="arrow">&#9662;</span></a>
+            <div class="submenu" id="estoque">
+                <a href="#" onclick="loadContent('inclusao')">Inclusão de estoque</a>
+                <a href="#" onclick="loadContent('baixa')">Baixa de estoque</a>
+                <a href="#" onclick="loadContent('relatorio')">Relatório de estoque</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="content">
+        <div id="dynamic-content">
+            <!-- Conteúdo dinâmico carregado aqui -->
+        </div>
+    </div>
+
+    <div class="confirmation-dialog" id="confirmation-dialog">
+        <p>Deseja realmente sair do sistema?</p>
+        <button class="confirm-btn" onclick="confirmLogout()">Sim</button>
+        <button class="cancel-btn" onclick="cancelLogout()">Não</button>
+    </div>
+
+    <div class="access-point-dialog" id="access-point-dialog">
+        <p>Selecione um ponto de acesso:</p>
+        <button onclick="selectAccessPoint('ti')">T.I</button>
+        <button onclick="selectAccessPoint('consultor')">Consultor</button>
+        <button onclick="selectAccessPoint('comercial')">Comercial</button>
+        <button onclick="selectAccessPoint('admin')">X Administrador do Sistema</button>
+        <button class="cancel-btn" onclick="cancelAccessPointDialog()">Cancelar</button>
+    </div>
+
+    <script>
+        function toggleMenu() {
+            const menu = document.getElementById('menu');
+            menu.classList.toggle('active');
+        }
+
+        function toggleSubMenu(id) {
+            const submenu = document.getElementById(id);
+            submenu.style.display = submenu.style.display === 'block' ? 'none' : 'block';
+            closeOtherSubMenus(id);
+        }
+
+        function closeOtherSubMenus(id) {
+            const submenus = document.querySelectorAll('.submenu');
+            submenus.forEach(sub => {
+                if (sub.id !== id) {
+                    sub.style.display = 'none';
+                }
+            });
+        }
+
+        function loadContent(content) {
+            document.getElementById('dynamic-content').innerHTML = `<h3>${content}</h3>`;
+            closeMenu();
+        }
+
+        function closeMenu() {
+            const menu = document.getElementById('menu');
+            menu.classList.remove('active');
+        }
+
+        function filterMenu() {
+            const search = document.getElementById('search').value.toLowerCase();
+            const menuItems = document.querySelectorAll('.menu a');
+            menuItems.forEach(item => {
+                const text = item.textContent.toLowerCase();
+                item.style.display = text.includes(search) ? 'block' : 'none';
+            });
+        }
+
+        function clearContent() {
+            document.getElementById('dynamic-content').innerHTML = '';
+        }
+
+        function showLogoutConfirmation() {
+            document.getElementById('confirmation-dialog').style.display = 'block';
+        }
+
+        function confirmLogout() {
+            // Redireciona para a tela de login ou para onde desejar
+            window.location.href = 'file:///C:/Users/hital/Downloads/LOGIN%20S.html'; // Substitua pelo caminho da tela de login
+        }
+
+        function cancelLogout() {
+            document.getElementById('confirmation-dialog').style.display = 'none';
+        }
+
+        function updateDateTime() {
+            const now = new Date();
+            const datetimeElement = document.getElementById('datetime');
+            const options = { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
+            datetimeElement.textContent = now.toLocaleDateString('pt-BR', options).replace(',', ' |');
+        }
+
+        function showAccessPointDialog() {
+            document.getElementById('access-point-dialog').style.display = 'block';
+        }
+
+        function cancelAccessPointDialog() {
+            document.getElementById('access-point-dialog').style.display = 'none';
+        }
+
+        function selectAccessPoint(accessPoint) {
+            let menuItems = document.querySelectorAll('.menu-item');
+            menuItems.forEach(item => {
+                item.style.display = 'none';
+            });
+
+            if (accessPoint === 'ti') {
+                document.querySelector('.menu-item[data-id="estoque"]').style.display = 'block';
+            } else if (accessPoint === 'consultor') {
+                document.querySelector('.menu-item[data-id="operacional"]').style.display = 'block';
+            } else if (accessPoint === 'admin') {
+                menuItems.forEach(item => {
+                    item.style.display = 'block';
+                });
+            }
+
+            cancelAccessPointDialog();
+        }
+
+        // Atualiza data e hora a cada segundo
+        setInterval(updateDateTime, 1000);
+
+        document.addEventListener('DOMContentLoaded', updateDateTime);
+    </script>
+
+</body>
+</html>
